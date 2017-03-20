@@ -7,6 +7,7 @@
 #define MAX_THREADS 64
 #define CACHELINE_SIZE 64
 
+#ifndef ATOMIC_BARRIER
 #define ATOMIC_BARRIER
 //#define PTHREAD_BARRIER
 
@@ -94,10 +95,12 @@ static inline void CompareAndSwap(int thread_index) {
     
     long long elapsed_us, elapsed_cyc;
 
+    /*
     PAPI_register_thread();
     
     elapsed_us = PAPI_get_real_usec();
     elapsed_cyc = PAPI_get_real_cyc();
+    */
     
     for(i = 0; i < num_of_iteration; i++) {
         // Read from data source
@@ -140,6 +143,7 @@ static inline void CompareAndSwap(int thread_index) {
     }
     RTS_sync(thread_index);
     
+    /*
     elapsed_us = PAPI_get_real_usec() - elapsed_us;
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
     
@@ -147,7 +151,7 @@ static inline void CompareAndSwap(int thread_index) {
     printf( "Thread 0x%x Real cycles  : \t%lld\n", (int) pthread_self(), elapsed_cyc );
     
     PAPI_unregister_thread();
-    
+    */
 }
 
 static inline void combining_thread(int thread_index) {
