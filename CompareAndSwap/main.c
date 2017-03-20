@@ -241,10 +241,7 @@ int main(int argc, char **argv) {
     if (retval != PAPI_OK) handle_error(retval);
     
     /* Start counting */
-    retval = PAPI_start(EventSet);
-    if (retval != PAPI_OK) handle_error(retval);
-    
-    
+    PAPI_start(EventSet);
     
     elapsed_us = PAPI_get_real_usec(  );
     elapsed_cyc = PAPI_get_real_cyc(  );
@@ -273,30 +270,24 @@ int main(int argc, char **argv) {
     // join All Threads
     for (i = num_of_threads; i >= 0; i--)
     {
-        rc = pthread_join(threads[i], (void **)&status);
-        if (rc != 0)
-        {
-            printf("ERROR; return code from pthread_join() is %d, thread %d\n", rc, i);
-            return -1;
-        }
+        pthread_join(threads[i], (void **)&status);
     }
     
 #ifdef PTHREAD_BARRIER
     // Destroy pthread barrier
     pthread_barrier_destroy(&barrier);
 #endif
+    /* Read the counters */
+    PAPI_read(EventSet, values);
+    
+    /* Start the counters */
+    PAPI_stop(EventSet, values);
     
     printf("sum: %lld\n", sum);
     
-    /* Read the counters */
-    retval = PAPI_read(EventSet, values);
-    if (retval != PAPI_OK) handle_error(retval);
-    /* Start the counters */
-    retval = PAPI_stop(EventSet, values);
-    if (retval != PAPI_OK) handle_error(retval);
-    
     elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
+    
     printf( "Master real usec   : \t%lld\n", elapsed_us );
     printf( "Master real cycles : \t%lld\n", elapsed_cyc );
     
@@ -325,8 +316,8 @@ void *thread_main(void *arg)
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec() - elapsed_us;
     
-    printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(  ),elapsed_us );
-    printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
+    //printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(),elapsed_us );
+    //printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
     
     pthread_exit((void *) 0);
 }
@@ -353,8 +344,8 @@ void *thread_combining(void *arg)
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec() - elapsed_us;
     
-    printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(  ),elapsed_us );
-    printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
+    //printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(),elapsed_us );
+    //printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
     
     pthread_exit((void *) 0);
 }
