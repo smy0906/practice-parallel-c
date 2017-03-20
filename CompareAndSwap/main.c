@@ -77,7 +77,7 @@ int change_buffer(int turn) {
 
 // Compare And Swap Actor
 static inline void CompareAndSwap(int thread_index) {
-    // printf("%d\n", thread_index);
+    
     
     // change Global "firstTurn" var to Local "turn" var
     int turn = 1;
@@ -91,6 +91,13 @@ static inline void CompareAndSwap(int thread_index) {
     
     int interval;
     int source_index;
+    
+    long long elapsed_us, elapsed_cyc;
+
+    PAPI_register_thread();
+    
+    elapsed_us = PAPI_get_real_usec();
+    elapsed_cyc = PAPI_get_real_cyc();
     
     for(i = 0; i < num_of_iteration; i++) {
         // Read from data source
@@ -132,6 +139,15 @@ static inline void CompareAndSwap(int thread_index) {
         RTS_sync(thread_index);
     }
     RTS_sync(thread_index);
+    
+    elapsed_us = PAPI_get_real_usec() - elapsed_us;
+    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+    
+    printf( "Thread 0x%x Real usec    : \t%lld\n", (int) pthread_self(), elapsed_us );
+    printf( "Thread 0x%x Real cycles  : \t%lld\n", (int) pthread_self(), elapsed_cyc );
+    
+    PAPI_unregister_thread();
+    
 }
 
 static inline void combining_thread(int thread_index) {
