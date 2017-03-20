@@ -8,7 +8,11 @@
 
 git pull
 gcc -I/opt/papi/5.5.1/include -lpthread -O3 main.c /opt/papi/5.5.1/lib/libpapi.a -o main
-./main --i 1000000 --t 2
-./main --i 1000000 --t 4
-./main --i 1000000 --t 8
-./main --i 1000000 --t 16
+I_NUM=10000000
+T_NUM=2
+while [ $T_NUM -lt 17 ]
+do
+    ./main --i $I --t $T_NUM
+    echo '\n\n'
+    $T_NUM=$T_NUM-1
+done
