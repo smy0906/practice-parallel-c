@@ -316,7 +316,7 @@ void *thread_main(void *arg)
     elapsed_us = PAPI_get_real_usec(  );
     elapsed_cyc = PAPI_get_real_cyc(  );
     
-    retval = PAPI_start( EventSet );
+    PAPI_start( EventSet );
     
     CompareAndSwap((int)arg);
     
