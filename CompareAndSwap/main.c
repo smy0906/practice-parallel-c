@@ -305,7 +305,29 @@ int main(int argc, char **argv) {
 
 void *thread_main(void *arg)
 {
+    int EventSet = PAPI_NULL;
+    long long elapsed_us, elapsed_cyc;
+    long_long values[1] = {(long_long) 0};
+    
+    PAPI_register_thread();
+    
+    printf( "Thread 0x%x started\n", ( int ) pthread_self(  ) );
+    
+    elapsed_us = PAPI_get_real_usec(  );
+    elapsed_cyc = PAPI_get_real_cyc(  );
+    
+    retval = PAPI_start( EventSet );
+    
     CompareAndSwap((int)arg);
+    
+    PAPI_stop(EventSet, values[0]);
+    
+    elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
+    elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
+    
+    printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(  ),elapsed_us );
+    printf( "Thread 0x%x Real cycles  : \t%lld\n", (int) pthread_self(),elapsed_cyc );
+    
     pthread_exit((void *) 0);
 }
 
