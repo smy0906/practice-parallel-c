@@ -62,9 +62,7 @@ void RTS_sync(int tid)
 // Randomly generate input value less than the ceiling value, in this case which is 1024
 void init() {
     {
-        int i;
-        int ceiling = 1024;
-        
+        int i,ceiling = 1024;
         for(i=0; i<SIZE_OF_INT_SOURCES; i++){
             int_data_source[i] = rand() & (ceiling-1);
         }
@@ -77,29 +75,12 @@ int change_buffer(int turn) {
 
 // Compare And Swap Actor
 static inline void CompareAndSwap(int thread_index) {
-    
-    
     // change Global "firstTurn" var to Local "turn" var
     int turn = 1;
-    
     int i;
     
-    int laminar_x1;
-    int laminar_x2;
-    int laminar_x3;
-    int laminar_x4;
-    
-    int interval;
-    int source_index;
-    
-    long long elapsed_us, elapsed_cyc;
-
-    /*
-    PAPI_register_thread();
-    
-    elapsed_us = PAPI_get_real_usec();
-    elapsed_cyc = PAPI_get_real_cyc();
-    */
+    int laminar_x1, laminar_x2, laminar_x3, laminar_x4;
+    int interval, source_index;
     
     for(i = 0; i < num_of_iteration; i++) {
         // Read from data source
@@ -141,16 +122,6 @@ static inline void CompareAndSwap(int thread_index) {
         RTS_sync(thread_index);
     }
     RTS_sync(thread_index);
-    
-    /*
-    elapsed_us = PAPI_get_real_usec() - elapsed_us;
-    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-    
-    printf( "Thread 0x%x Real usec    : \t%lld\n", (int) pthread_self(), elapsed_us );
-    printf( "Thread 0x%x Real cycles  : \t%lld\n", (int) pthread_self(), elapsed_cyc );
-    
-    PAPI_unregister_thread();
-    */
 }
 
 static inline void combining_thread(int thread_index) {
@@ -185,10 +156,6 @@ void usage() {
     exit(1);
 }
 
-int arg_to_int(char* arg) {
-    return (int) strtol(arg, NULL, 10);
-}
-
 void validate_global_values() {
     if (num_of_iteration == -1 || num_of_threads == -1 || num_of_threads > MAX_THREADS) {
         usage();
@@ -197,10 +164,7 @@ void validate_global_values() {
 }
 
 int main(int argc, char **argv) {
-    int i;
-    int rc;
-    int status;
-    int c;
+    int i, c, status;
     long long elapsed_us, elapsed_cyc;
     long_long values[1] = {(long_long) 0};
     
@@ -241,7 +205,6 @@ int main(int argc, char **argv) {
     
     /*Initialize the PAPI library */
     PAPI_library_init(PAPI_VER_CURRENT);
-    //PAPI_thread_init((unsigned long(*)(void))(pthread_self));
     
     elapsed_us = PAPI_get_real_usec();
     elapsed_cyc = PAPI_get_real_cyc();
@@ -280,8 +243,8 @@ int main(int argc, char **argv) {
     
     printf("sum: %lld\n", sum);
     
-    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-    elapsed_us = PAPI_get_real_usec() - elapsed_us;
+    elapsed_cyc = PAPI_get_real_cyc()-elapsed_cyc;
+    elapsed_us = PAPI_get_real_usec()-elapsed_us;
     
     printf("Master real usec   : \t%lld\n", elapsed_us);
     printf("Master real cycles : \t%lld\n", elapsed_cyc);
