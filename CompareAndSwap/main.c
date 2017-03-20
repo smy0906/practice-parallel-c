@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
     
     /*Initialize the PAPI library */
     PAPI_library_init(PAPI_VER_CURRENT);
-    PAPI_thread_init((unsigned long(*)(void))(pthread_self));
+    //PAPI_thread_init((unsigned long(*)(void))(pthread_self));
     
     elapsed_us = PAPI_get_real_usec();
     elapsed_cyc = PAPI_get_real_cyc();
