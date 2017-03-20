@@ -333,6 +333,28 @@ void *thread_main(void *arg)
 
 void *thread_combining(void *arg)
 {
+    int EventSet = PAPI_NULL;
+    long long elapsed_us, elapsed_cyc;
+    long_long values[1] = {(long_long) 0};
+    
+    PAPI_register_thread();
+    
+    //printf( "Thread 0x%x started\n", ( int ) pthread_self(  ) );
+    
+    elapsed_us = PAPI_get_real_usec();
+    elapsed_cyc = PAPI_get_real_cyc();
+    
+    PAPI_start( EventSet );
+    
     combining_thread((int)arg);
+    
+    PAPI_stop(EventSet, values[0]);
+    
+    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+    elapsed_us = PAPI_get_real_usec() - elapsed_us;
+    
+    printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(  ),elapsed_us );
+    printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
+    
     pthread_exit((void *) 0);
 }
