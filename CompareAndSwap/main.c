@@ -45,6 +45,13 @@ int int_data_source[16] = {0};
 int num_of_threads = -1;
 int num_of_iteration = -1;
 
+// PAPI handle error
+void handle_error (int retval)
+{
+    printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
+    exit(1);
+}
+
 void RTS_sync(int tid)
 {
 #ifdef ATOMIC_BARRIER
@@ -62,7 +69,9 @@ void RTS_sync(int tid)
 // Randomly generate input value less than the ceiling value, in this case which is 1024
 void init() {
     {
-        int i,ceiling = 1024;
+        int i;
+        int ceiling = 1024;
+        
         for(i=0; i<SIZE_OF_INT_SOURCES; i++){
             int_data_source[i] = rand() & (ceiling-1);
         }
@@ -75,14 +84,22 @@ int change_buffer(int turn) {
 
 // Compare And Swap Actor
 static inline void CompareAndSwap(int thread_index) {
+    // printf("%d\n", thread_index);
+    
     // change Global "firstTurn" var to Local "turn" var
     int turn = 1;
+    
     int i;
     
-    int laminar_x1, laminar_x2, laminar_x3, laminar_x4;
-    int interval, source_index;
+    int laminar_x1;
+    int laminar_x2;
+    int laminar_x3;
+    int laminar_x4;
     
-    for(i = 0; i < num_of_iteration; i++) {
+    int interval;
+    int source_index;
+    
+    for(i = 0; i < num_of_iteration/num_of_threads; i++) {
         // Read from data source
         {
             // Calulate source index
@@ -132,7 +149,7 @@ static inline void combining_thread(int thread_index) {
     RTS_sync(thread_index);
     
     // Read Double Buffers
-    for (i = 0; i < num_of_iteration; i++) {
+    for (i = 0; i < num_of_iteration/num_of_threads; i++) {
         if (turn) {
             for (j = 0; j<num_of_threads; j++) {
                 sum += buffer_1[j][0].value;
@@ -156,6 +173,10 @@ void usage() {
     exit(1);
 }
 
+int arg_to_int(char* arg) {
+    return (int) strtol(arg, NULL, 10);
+}
+
 void validate_global_values() {
     if (num_of_iteration == -1 || num_of_threads == -1 || num_of_threads > MAX_THREADS) {
         usage();
@@ -164,7 +185,11 @@ void validate_global_values() {
 }
 
 int main(int argc, char **argv) {
-    int i, c, status;
+    int i;
+    int rc;
+    int status;
+    int c;
+    int retval, EventSet = PAPI_NULL;
     long long elapsed_us, elapsed_cyc;
     long_long values[1] = {(long_long) 0};
     
@@ -204,10 +229,25 @@ int main(int argc, char **argv) {
     validate_global_values();
     
     /*Initialize the PAPI library */
-    PAPI_library_init(PAPI_VER_CURRENT);
+    retval = PAPI_library_init(PAPI_VER_CURRENT);
+    if (retval != PAPI_VER_CURRENT) handle_error(retval);
     
-    elapsed_us = PAPI_get_real_usec();
-    elapsed_cyc = PAPI_get_real_cyc();
+    /* Create an EventSet */
+    retval = PAPI_create_eventset(&EventSet);
+    if (retval != PAPI_OK) handle_error(retval);
+    
+    /* Add Total Instructions Executed to our EventSet */
+    retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
+    if (retval != PAPI_OK) handle_error(retval);
+    
+    /* Start counting */
+    retval = PAPI_start(EventSet);
+    if (retval != PAPI_OK) handle_error(retval);
+    
+    
+    
+    elapsed_us = PAPI_get_real_usec(  );
+    elapsed_cyc = PAPI_get_real_cyc(  );
     
     // init input array
     init();
@@ -233,7 +273,12 @@ int main(int argc, char **argv) {
     // join All Threads
     for (i = num_of_threads; i >= 0; i--)
     {
-        pthread_join(threads[i], (void **)&status);
+        rc = pthread_join(threads[i], (void **)&status);
+        if (rc != 0)
+        {
+            printf("ERROR; return code from pthread_join() is %d, thread %d\n", rc, i);
+            return -1;
+        }
     }
     
 #ifdef PTHREAD_BARRIER
@@ -243,11 +288,22 @@ int main(int argc, char **argv) {
     
     printf("sum: %lld\n", sum);
     
-    elapsed_cyc = PAPI_get_real_cyc()-elapsed_cyc;
-    elapsed_us = PAPI_get_real_usec()-elapsed_us;
+    /* Read the counters */
+    retval = PAPI_read(EventSet, values);
+    if (retval != PAPI_OK) handle_error(retval);
     
-    printf("Master real usec   : \t%lld\n", elapsed_us);
-    printf("Master real cycles : \t%lld\n", elapsed_cyc);
+    printf("After reading counters: %lld\n",values[0]);
+    
+    /* Start the counters */
+    retval = PAPI_stop(EventSet, values);
+    if (retval != PAPI_OK) handle_error(retval);
+    printf("After stopping counters: %lld\n",values[0]);
+    
+    
+    elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
+    elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
+    printf( "Master real usec   : \t%lld\n", elapsed_us );
+    printf( "Master real cycles : \t%lld\n", elapsed_cyc );
     
     return 0;
 }
