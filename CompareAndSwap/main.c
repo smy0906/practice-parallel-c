@@ -7,7 +7,6 @@
 #define MAX_THREADS 64
 #define CACHELINE_SIZE 64
 
-#ifndef ATOMIC_BARRIER
 #define ATOMIC_BARRIER
 //#define PTHREAD_BARRIER
 
