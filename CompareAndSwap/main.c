@@ -232,6 +232,20 @@ int main(int argc, char **argv) {
     retval = PAPI_library_init(PAPI_VER_CURRENT);
     if (retval != PAPI_VER_CURRENT) handle_error(retval);
     
+    /* Create an EventSet */
+    retval = PAPI_create_eventset(&EventSet);
+    if (retval != PAPI_OK) handle_error(retval);
+    
+    /* Add Total Instructions Executed to our EventSet */
+    retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
+    if (retval != PAPI_OK) handle_error(retval);
+    
+    /* Start counting */
+    retval = PAPI_start(EventSet);
+    if (retval != PAPI_OK) handle_error(retval);
+    
+    
+    
     elapsed_us = PAPI_get_real_usec(  );
     elapsed_cyc = PAPI_get_real_cyc(  );
     
@@ -273,6 +287,13 @@ int main(int argc, char **argv) {
 #endif
     
     printf("sum: %lld\n", sum);
+    
+    /* Read the counters */
+    retval = PAPI_read(EventSet, values);
+    if (retval != PAPI_OK) handle_error(retval);
+    /* Start the counters */
+    retval = PAPI_stop(EventSet, values);
+    if (retval != PAPI_OK) handle_error(retval);
     
     elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
