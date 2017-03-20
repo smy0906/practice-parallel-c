@@ -311,7 +311,7 @@ void *thread_main(void *arg)
     
     CompareAndSwap((int)arg);
     
-    PAPI_stop(EventSet, values[0]);
+    PAPI_stop(EventSet, values);
     
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec() - elapsed_us;
@@ -339,7 +339,7 @@ void *thread_combining(void *arg)
     
     combining_thread((int)arg);
     
-    PAPI_stop(EventSet, values[0]);
+    PAPI_stop(EventSet, values);
     
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec() - elapsed_us;
