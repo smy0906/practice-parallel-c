@@ -93,15 +93,6 @@ static inline void CompareAndSwap(int thread_index) {
     int interval;
     int source_index;
     
-    long long elapsed_us, elapsed_cyc;
-
-    /*
-    PAPI_register_thread();
-    
-    elapsed_us = PAPI_get_real_usec();
-    elapsed_cyc = PAPI_get_real_cyc();
-    */
-    
     for(i = 0; i < num_of_iteration; i++) {
         // Read from data source
         {
@@ -142,16 +133,6 @@ static inline void CompareAndSwap(int thread_index) {
         RTS_sync(thread_index);
     }
     RTS_sync(thread_index);
-    
-    /*
-    elapsed_us = PAPI_get_real_usec() - elapsed_us;
-    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-    
-    printf( "Thread 0x%x Real usec    : \t%lld\n", (int) pthread_self(), elapsed_us );
-    printf( "Thread 0x%x Real cycles  : \t%lld\n", (int) pthread_self(), elapsed_cyc );
-    
-    PAPI_unregister_thread();
-    */
 }
 
 static inline void combining_thread(int thread_index) {
@@ -242,7 +223,6 @@ int main(int argc, char **argv) {
     
     /*Initialize the PAPI library */
     PAPI_library_init(PAPI_VER_CURRENT);
-    PAPI_thread_init((unsigned long(*)(void))(pthread_self));
     
     elapsed_us = PAPI_get_real_usec();
     elapsed_cyc = PAPI_get_real_cyc();
