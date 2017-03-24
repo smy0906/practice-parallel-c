@@ -21,6 +21,8 @@ static struct BVAR* thread_ctrs;
 pthread_barrier_t barrier;
 #endif
 
+#define MAX_SIM 1024
+
 volatile long long sum = 0;
 
 pthread_t threads[MAX_THREADS];
@@ -44,13 +46,6 @@ int int_data_source[16] = {0};
 // Number of threads & iteration
 int num_of_threads = -1;
 int num_of_iteration = -1;
-
-// PAPI handle error
-void handle_error (int retval)
-{
-    printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
-    exit(1);
-}
 
 void RTS_sync(int tid)
 {
@@ -114,6 +109,16 @@ static inline void CompareAndSwap(int thread_index) {
         {
             int x1 = laminar_x1;
             int x2 = laminar_x2;
+            int i,j,k = 0;
+            
+            // compute something
+            for (i = 0; i < MAX_SIM; i++) {
+                for (j = 0; j < MAX_SIM; j++) {
+                    for (k = 0; k < MAX_SIM; k++) {
+                        k = i * j * rand();
+                    }
+                }
+            }
             
             if (x1 > x2) {
                 laminar_x3 = x2;
@@ -189,7 +194,6 @@ int main(int argc, char **argv) {
     int rc;
     int status;
     int c;
-    int retval, EventSet = PAPI_NULL;
     long long elapsed_us, elapsed_cyc;
     long_long values[1] = {(long_long) 0};
     
@@ -229,22 +233,11 @@ int main(int argc, char **argv) {
     validate_global_values();
     
     /*Initialize the PAPI library */
-    retval = PAPI_library_init(PAPI_VER_CURRENT);
-    if (retval != PAPI_VER_CURRENT) handle_error(retval);
+    PAPI_library_init(PAPI_VER_CURRENT);
+    PAPI_thread_init((unsigned long(*)(void))(pthread_self));
     
-    /* Create an EventSet */
-    retval = PAPI_create_eventset(&EventSet);
-    if (retval != PAPI_OK) handle_error(retval);
-    
-    /* Add Total Instructions Executed to our EventSet */
-    retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
-    if (retval != PAPI_OK) handle_error(retval);
-    
-    /* Start counting */
-    PAPI_start(EventSet);
-    
-    elapsed_us = PAPI_get_real_usec(  );
-    elapsed_cyc = PAPI_get_real_cyc(  );
+    elapsed_us = PAPI_get_real_usec();
+    elapsed_cyc = PAPI_get_real_cyc();
     
     // init input array
     init();
@@ -277,75 +270,26 @@ int main(int argc, char **argv) {
     // Destroy pthread barrier
     pthread_barrier_destroy(&barrier);
 #endif
-    /* Read the counters */
-    PAPI_read(EventSet, values);
-    
-    /* Start the counters */
-    PAPI_stop(EventSet, values);
     
     printf("sum: %lld\n", sum);
     
-    elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
-    elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
+    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+    elapsed_us = PAPI_get_real_usec() - elapsed_us;
     
-    printf( "Master real usec   : \t%lld\n", elapsed_us );
-    printf( "Master real cycles : \t%lld\n", elapsed_cyc );
+    printf("Master real usec   : \t%lld\n", elapsed_us);
+    printf("Master real cycles : \t%lld\n", elapsed_cyc);
     
     return 0;
 }
 
 void *thread_main(void *arg)
 {
-    int EventSet = PAPI_NULL;
-    long long elapsed_us, elapsed_cyc;
-    long_long values[1] = {(long_long) 0};
-    
-    PAPI_register_thread();
-    
-    //printf( "Thread 0x%x started\n", ( int ) pthread_self(  ) );
-    
-    elapsed_us = PAPI_get_real_usec();
-    elapsed_cyc = PAPI_get_real_cyc();
-    
-    PAPI_start( EventSet );
-    
     CompareAndSwap((int)arg);
-    
-    PAPI_stop(EventSet, values);
-    
-    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-    elapsed_us = PAPI_get_real_usec() - elapsed_us;
-    
-    //printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(),elapsed_us );
-    //printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
-    
     pthread_exit((void *) 0);
 }
 
 void *thread_combining(void *arg)
 {
-    int EventSet = PAPI_NULL;
-    long long elapsed_us, elapsed_cyc;
-    long_long values[1] = {(long_long) 0};
-    
-    PAPI_register_thread();
-    
-    //printf( "Thread 0x%x started\n", ( int ) pthread_self(  ) );
-    
-    elapsed_us = PAPI_get_real_usec();
-    elapsed_cyc = PAPI_get_real_cyc();
-    
-    PAPI_start( EventSet );
-    
     combining_thread((int)arg);
-    
-    PAPI_stop(EventSet, values);
-    
-    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-    elapsed_us = PAPI_get_real_usec() - elapsed_us;
-    
-    //printf( "Thread 0x%x Real usec    : \t%lld\n",( int ) pthread_self(),elapsed_us );
-    //printf( "Thread 0x%x Real cycles  : \t%lld\n\n", (int) pthread_self(),elapsed_cyc );
-    
     pthread_exit((void *) 0);
 }
