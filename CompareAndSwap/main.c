@@ -196,6 +196,7 @@ int main(int argc, char **argv) {
     int c;
     long long elapsed_us, elapsed_cyc;
     long_long values[1] = {(long_long) 0};
+    int EventSet = PAPI_NULL;
     
     while(1)
     {
