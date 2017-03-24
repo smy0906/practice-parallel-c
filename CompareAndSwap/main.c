@@ -236,10 +236,12 @@ int main(int argc, char **argv) {
     validate_global_values();
     
     /*Initialize the PAPI library */
+    /*
     PAPI_library_init(PAPI_VER_CURRENT);
     
     elapsed_us = PAPI_get_real_usec();
     elapsed_cyc = PAPI_get_real_cyc();
+    */
     
     // init input array
     init();
@@ -274,12 +276,15 @@ int main(int argc, char **argv) {
 #endif
     
     printf("sum: %lld\n", sum);
-    
+
+    /*
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
     elapsed_us = PAPI_get_real_usec() - elapsed_us;
     
+    
     printf("Master real usec   : \t%lld\n", elapsed_us);
     printf("Master real cycles : \t%lld\n", elapsed_cyc);
+    */
     
     return 0;
 }
