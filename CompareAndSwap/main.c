@@ -21,7 +21,7 @@ static struct BVAR* thread_ctrs;
 pthread_barrier_t barrier;
 #endif
 
-#define MAX_SIM 1024
+// #define MAX_SIM 1024
 
 volatile long long sum = 0;
 
@@ -109,16 +109,18 @@ static inline void CompareAndSwap(int thread_index) {
         {
             int x1 = laminar_x1;
             int x2 = laminar_x2;
-            int i,j,k = 0;
+            int ii,jj,kk = 0;
             
             // compute something
-            for (i = 0; i < MAX_SIM; i++) {
-                for (j = 0; j < MAX_SIM; j++) {
-                    for (k = 0; k < MAX_SIM; k++) {
-                        k = i * j * rand();
+            /*
+            for (ii = 0; ii < MAX_SIM; ii++) {
+                for (jj = 0; jj < MAX_SIM; jj++) {
+                    for (kk = 0; kk < MAX_SIM; kk++) {
+                        kk = ii * jj * rand();
                     }
                 }
             }
+            */
             
             if (x1 > x2) {
                 laminar_x3 = x2;
@@ -235,9 +237,6 @@ int main(int argc, char **argv) {
     
     /*Initialize the PAPI library */
     PAPI_library_init(PAPI_VER_CURRENT);
-    PAPI_thread_init((unsigned long(*)(void))(pthread_self));
-    PAPI_create_eventset(&EventSet);
-    PAPI_add_event(EventSet, PAPI_TOT_INS);
     
     elapsed_us = PAPI_get_real_usec();
     elapsed_cyc = PAPI_get_real_cyc();
